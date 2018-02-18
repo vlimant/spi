@@ -1,4 +1,5 @@
 import os
+import string
 fstab = {}
 samba = {}
 
@@ -18,25 +19,19 @@ for line in os.popen('lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL').read().split(
     print name,"on",dev
     fstab[dev] = name
 
-
-n = open('fstab_new','w')
-o = open('/etc/fstab')
-for line in fstab:
-    dev,_ = line.split(1)
-    name = fstab.get(dev,None)
-    if name:
-        mnt='/mnt/%s'% name
-        os.system('mkdir -p %s'% mnt)
-        opt='defaults,noauto'
-        add='/dev/%s %s %s %s 0 0'%(dev, mnt, form, opt)
-        n.write( add )
-    else:
-        n.write( line )
+os.system('cp /etc/fstab.base fstab_new')
+n = open('fstab_new','a')
+for dev,name in fstab.items():
+    mnt='/mnt/%s'% name
+    os.system('mkdir -p %s'% mnt)
+    opt='defaults,noauto'
+    add='/dev/%s %s %s %s 0 0 \n'%(dev, mnt, form, opt)
+    n.write( add )
 n.close()
-o.close()
-    
 os.system('mv fstab_new /etc/fstab')
-for _,mnt in fstab.items():
+
+for _,name in fstab.items():
+    mnt='/mnt/%s'% name
     os.system('umount %s'%mnt)
     print "mounting",mnt
     os.system('mount %s'%mnt)
