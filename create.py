@@ -2,26 +2,36 @@ import os
 import string
 fstab = {}
 samba = {}
-
+forms = {}
+labels=['MYBOOK','STORE']
 for line in os.popen('lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL').read().split('\n'):
     if not line: continue
-    if not 'MYBOOK' in line :continue
+    if not any([label in line for label in labels]) :continue
     try:
         dev,form,s,name = line.split()
         samba[name] = 1
     except:
-        dev,form,s,mp,name = line.split()
-        samba[name] = 1
-        print mp,"already mounted"
-        continue
-        os.system('umount %s'%mp)
+        try:
+            dev,form,s,mp,name = line.split()
+            samba[name] = 1
+            print mp,"already mounted"
+            #continue
+            #os.system('umount %s'%mp)
+        except:
+            print "line",line
+            continue
     dev = dev[-4:]
     print name,"on",dev
     fstab[dev] = name
+    forms[dev] = form
 
 os.system('cp /etc/fstab.base fstab_new')
 n = open('fstab_new','a')
-for dev,name in fstab.items():
+
+#for dev,name in fstab.items():
+for dev in sorted(fstab.keys()):
+    name = fstab[dev]
+    form = forms[dev]
     mnt='/mnt/%s'% name
     os.system('mkdir -p %s'% mnt)
     opt='defaults,noauto'
